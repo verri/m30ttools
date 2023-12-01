@@ -124,10 +124,10 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
         cap = cv2.VideoCapture(videos[i])
 
         for _, row in fdata[i].iterrows():
-            timestamp = row["time(millisecond)"]
+            time = row["time(millisecond)"]
 
             # Seek to the frame
-            cap.set(cv2.CAP_PROP_POS_MSEC, timestamp)
+            cap.set(cv2.CAP_PROP_POS_MSEC, time)
             ret, frame = cap.read()
 
             geoposition = {
@@ -158,7 +158,7 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
             # Create the frame
             frame = {
                 "array": frame,
-                "timestamp": timestamp,
+                "timestamp": row["datetime(utc)"],
                 "geoposition": geoposition,
                 "camera": camera,
             }

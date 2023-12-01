@@ -28,8 +28,8 @@ def efcommand(args):
 
     with open(output, 'w') as csvfile:
         fieldnames = ['filename', 'timestamp', 'latitude', 'longitude',
-                'ground_level_altitude', 'sea_level_altitude',
-                'gimbal_pitch', 'gimbal_roll', 'gimbal_yaw']
+                      'ground_level_altitude', 'sea_level_altitude',
+                      'gimbal_pitch', 'gimbal_roll', 'gimbal_yaw']
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -57,28 +57,34 @@ def efcommand(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='m30ttools', description='Tools to organize data from DJI M30T')
+    parser = argparse.ArgumentParser(
+        prog='m30ttools', description='Tools to organize data from DJI M30T')
     subparsers = parser.add_subparsers(required=True)
 
     efparser = subparsers.add_parser('extract-frames',
-            help='Extract frames from video files associating them with flight data.')
+                                     help='Extract frames from video files associating them with flight data.')
 
     # The first argument of the subcommand extract-frames is a list of video files.
-    efparser.add_argument('--video-files', dest='video', nargs='+', help='Video files to extract frames from (order matters).', required=True)
+    efparser.add_argument('--video-files', dest='video', nargs='+',
+                          help='Video files to extract frames from (order matters).', required=True)
 
     # The, we need a list of CSV files containing the flight data.
-    efparser.add_argument('--flight-data', dest='data', nargs='+', help='CSV files containing flight data (order matters).', required=True)
+    efparser.add_argument('--flight-data', dest='data', nargs='+',
+                          help='CSV files containing flight data (order matters).', required=True)
 
     # The output directory is where the frames will be saved.
-    efparser.add_argument('--frames-dir', dest='frames_dir', help='Directory where to save the extracted frames.', required=True)
+    efparser.add_argument('--frames-dir', dest='frames_dir',
+                          help='Directory where to save the extracted frames.', required=True)
 
     # The output CSV file is where the flight data synced with each frame will be saved.
-    efparser.add_argument('--output', dest='output', help='CSV file where to save the flight data synced with each frame.', required=True)
+    efparser.add_argument('--output', dest='output',
+                          help='CSV file where to save the flight data synced with each frame.', required=True)
 
     efparser.set_defaults(func=efcommand)
 
     args = parser.parse_args()
     args.func(args)
+
 
 if __name__ == '__main__':
     main()
