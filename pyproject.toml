@@ -4,13 +4,18 @@ build-backend = "hatchling.build"
 
 [project]
 name = "m30ttools"
-version = "0.0.1"
+version = "0.1.0"
 authors = [
   { name="Filipe Verri", email="filipeverri@gmail.com" },
 ]
 description = "Tools to organize data from DJI M30T"
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+  "numpy >= 1.21",
+  "pandas",
+  "opencv-python",
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
