@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 
 from numpy.typing import NDArray
+from collections.abc import Generator
 
 from typing import TypedDict
 import math
@@ -72,7 +73,7 @@ class Frame(TypedDict):
     """Camera information"""
 
 
-def extract_frames(videos: list[str], fdata: list[str]) -> list[Frame]:
+def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None, None]:
     """Extract frames from videos and synchronize them with flight data
 
     Videos and flight data are assumed to be ordered by collection time.
@@ -88,8 +89,8 @@ def extract_frames(videos: list[str], fdata: list[str]) -> list[Frame]:
 
     Returns
     -------
-    list[Frame]
-        List of frames
+    Generator[Frame, None, None]
+        A generator that yields frames
     """
 
     # Load all datafiles in a single dataframe
@@ -117,14 +118,10 @@ def extract_frames(videos: list[str], fdata: list[str]) -> list[Frame]:
     for df in fdata:
         df["time(millisecond)"] -= df["time(millisecond)"].iloc[0]
 
-    frames = []
-
     # Now we can iterate over the videos and synchronize them with the flight
     for i in range(len(videos)):
         # Load the video
         cap = cv2.VideoCapture(videos[i])
-
-        print(f"Processing video {videos[i]}... {fdata[i].shape[0]} frames will be extracted from this video.")
 
         for _, row in fdata[i].iterrows():
             timestamp = row["time(millisecond)"]
@@ -166,7 +163,4 @@ def extract_frames(videos: list[str], fdata: list[str]) -> list[Frame]:
                 "camera": camera,
             }
 
-            # Append the frame to the list
-            frames.append(frame)
-
-    return frames
+            yield frame
