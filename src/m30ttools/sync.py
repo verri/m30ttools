@@ -133,7 +133,7 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
             geoposition = {
                 "latitude": row["latitude"],
                 "longitude": row["longitude"],
-                "ground_level_altitude": row["ground_elevation_at_drone_location(feet)"],
+                "ground_level_altitude": row["height_sonar(feet)"],
                 "sea_level_altitude": row["altitude_above_seaLevel(feet)"],
             }
 
