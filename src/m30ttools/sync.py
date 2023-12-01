@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 from collections.abc import Generator
 
-from typing import TypedDict
+from typing import TypedDict, Callable
 import math
 
 
@@ -60,11 +60,14 @@ class Camera(TypedDict):
 
 
 class Frame(TypedDict):
+    video_id: int
+    """Video ID"""
+
     array: NDArray[np.uint8]
     """Frame as a numpy array"""
 
-    timestamp: str
-    """Timestamp (ISO 8601) of the frame in the video"""
+    time: int
+    """Time (in milliseconds) of the frame in the video"""
 
     geoposition: Geoposition
     """Geoposition of the drone when the frame was captured"""
@@ -73,7 +76,7 @@ class Frame(TypedDict):
     """Camera information"""
 
 
-def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None, None]:
+def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[Frame], bool] = None) -> Generator[Frame, None, None]:
     """Extract frames from videos and synchronize them with flight data
 
     Videos and flight data are assumed to be ordered by collection time.
@@ -86,6 +89,9 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
         List of paths to videos
     fdata : list[str]
         List of paths to flight data
+    cond : Callable[[Frame], bool], optional
+        A function that takes a frame and returns True if the frame should be
+        returned, False otherwise. If None, all frames are returned.
 
     Returns
     -------
@@ -133,16 +139,11 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
             geoposition = {
                 "latitude": row["latitude"],
                 "longitude": row["longitude"],
-                "ground_level_altitude": row["height_sonar(feet)"],
-                "sea_level_altitude": row["altitude_above_seaLevel(feet)"],
+                "ground_level_altitude": row["height_sonar(meters)"],
+                "sea_level_altitude": row["altitude_above_seaLevel(meters)"],
             }
 
-            # Convert feet to meters
-            geoposition["ground_level_altitude"] *= 0.3048
-            geoposition["sea_level_altitude"] *= 0.3048
-
             # TODO: retrieve camera information from the video file
-
             camera = {
                 "model": "(unknown)",
                 "focal_length": math.nan,
@@ -157,10 +158,12 @@ def extract_frames(videos: list[str], fdata: list[str]) -> Generator[Frame, None
 
             # Create the frame
             frame = {
+                "video_id": i,
                 "array": frame,
-                "timestamp": row["datetime(utc)"],
+                "time": time,
                 "geoposition": geoposition,
                 "camera": camera,
             }
 
-            yield frame
+            if cond is None or cond(frame):
+                yield frame

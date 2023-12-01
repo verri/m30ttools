@@ -27,7 +27,7 @@ def efcommand(args):
     output = args.output
 
     with open(output, 'w') as csvfile:
-        fieldnames = ['filename', 'timestamp', 'latitude', 'longitude',
+        fieldnames = ['filename', 'video_id', 'time', 'latitude', 'longitude',
                       'ground_level_altitude', 'sea_level_altitude',
                       'gimbal_pitch', 'gimbal_roll', 'gimbal_yaw']
 
@@ -42,8 +42,9 @@ def efcommand(args):
 
             writer.writerow({
                 'filename': filename,
-                'timestamp': frame["timestamp"],
-                'latitude': frame["geoposition"]["latitude"],
+                'video_id': frame["video_id"],
+                'time': frame["time"],
+                'latitude': frame["gejposition"]["latitude"],
                 'longitude': frame["geoposition"]["longitude"],
                 'ground_level_altitude': frame["geoposition"]["ground_level_altitude"],
                 'sea_level_altitude': frame["geoposition"]["sea_level_altitude"],
