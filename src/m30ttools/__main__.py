@@ -15,6 +15,11 @@ import cv2
 from .sync import extract_frames
 
 
+def facing_down(frame):
+    """Returns True if the frame is facing down."""
+    return -91 <= frame["camera"]["gimbal"]["pitch"] <= -89
+
+
 def efcommand(args):
     print(args)
 
@@ -26,6 +31,11 @@ def efcommand(args):
     # Open CSV file to write frame information.
     output = args.output
 
+    if args.select == 'all':
+        args.select = None
+    elif args.select == 'facing-down':
+        args.select = facing_down
+
     with open(output, 'w') as csvfile:
         fieldnames = ['filename', 'video_filename', 'time', 'latitude', 'longitude',
                       'ground_level_altitude', 'sea_level_altitude',
@@ -35,7 +45,7 @@ def efcommand(args):
         writer.writeheader()
 
         # Extract frames and write to CSV file.
-        for i, frame in enumerate(extract_frames(args.video, args.data)):
+        for i, frame in enumerate(extract_frames(args.video, args.data, args.select)):
             # TODO: read number of digits from command line as an optional
             # argument.
             filename = f"{args.frames_dir}/{i:07d}.jpg"
@@ -44,7 +54,7 @@ def efcommand(args):
                 'filename': filename,
                 'video_filename': frame["video_filename"],
                 'time': frame["time"],
-                'latitude': frame["gejposition"]["latitude"],
+                'latitude': frame["geoposition"]["latitude"],
                 'longitude': frame["geoposition"]["longitude"],
                 'ground_level_altitude': frame["geoposition"]["ground_level_altitude"],
                 'sea_level_altitude': frame["geoposition"]["sea_level_altitude"],
@@ -80,6 +90,10 @@ def main():
     # The output CSV file is where the flight data synced with each frame will be saved.
     efparser.add_argument('--output', dest='output',
                           help='CSV file where to save the flight data synced with each frame.', required=True)
+
+    # A option to select which frames will be extracted.  The options are 'all' and 'facing-down'.
+    efparser.add_argument('--select', dest='select',
+                          default=None, choices=['all', 'facing-down'])
 
     efparser.set_defaults(func=efcommand)
 

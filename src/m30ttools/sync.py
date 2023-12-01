@@ -132,10 +132,6 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[Frame], 
         for _, row in fdata[i].iterrows():
             time = row["time(millisecond)"]
 
-            # Seek to the frame
-            cap.set(cv2.CAP_PROP_POS_MSEC, time)
-            ret, frame = cap.read()
-
             geoposition = {
                 "latitude": row["latitude"],
                 "longitude": row["longitude"],
@@ -159,11 +155,18 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[Frame], 
             # Create the frame
             frame = {
                 "video_filename": videos[i],
-                "array": frame,
+                "array": None,
                 "time": time,
                 "geoposition": geoposition,
                 "camera": camera,
             }
 
-            if cond is None or cond(frame):
-                yield frame
+            if cond is not None and not cond(frame):
+                continue
+
+            # Seek to the frame
+            cap.set(cv2.CAP_PROP_POS_MSEC, time)
+            ret, array = cap.read()
+
+            frame["array"] = array
+            yield frame
