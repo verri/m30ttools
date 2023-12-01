@@ -60,8 +60,8 @@ class Camera(TypedDict):
 
 
 class Frame(TypedDict):
-    video_id: int
-    """Video ID"""
+    video_filename: str
+    """Video filename"""
 
     array: NDArray[np.uint8]
     """Frame as a numpy array"""
@@ -158,7 +158,7 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[Frame], 
 
             # Create the frame
             frame = {
-                "video_id": i,
+                "video_filename": videos[i],
                 "array": frame,
                 "time": time,
                 "geoposition": geoposition,
