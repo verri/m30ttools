@@ -45,7 +45,8 @@ def efcommand(args):
         writer.writeheader()
 
         # Extract frames and write to CSV file.
-        for i, frame in enumerate(extract_frames(args.video, args.data, args.select)):
+        for i, frame in enumerate(extract_frames(
+                args.video, args.data, args.select)):
             # TODO: read number of digits from command line as an optional
             # argument.
             filename = f"{args.frames_dir}/{i:07d}.jpg"
@@ -75,7 +76,8 @@ def main():
     efparser = subparsers.add_parser('extract-frames',
                                      help='Extract frames from video files associating them with flight data.')
 
-    # The first argument of the subcommand extract-frames is a list of video files.
+    # The first argument of the subcommand extract-frames is a list of video
+    # files.
     efparser.add_argument('--video-files', dest='video', nargs='+',
                           help='Video files to extract frames from (order matters).', required=True)
 
@@ -87,11 +89,13 @@ def main():
     efparser.add_argument('--frames-dir', dest='frames_dir',
                           help='Directory where to save the extracted frames.', required=True)
 
-    # The output CSV file is where the flight data synced with each frame will be saved.
+    # The output CSV file is where the flight data synced with each frame will
+    # be saved.
     efparser.add_argument('--output', dest='output',
                           help='CSV file where to save the flight data synced with each frame.', required=True)
 
-    # A option to select which frames will be extracted.  The options are 'all' and 'facing-down'.
+    # A option to select which frames will be extracted.  The options are
+    # 'all' and 'facing-down'.
     efparser.add_argument('--select', dest='select',
                           default=None, choices=['all', 'facing-down'])
 

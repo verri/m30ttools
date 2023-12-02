@@ -10,73 +10,17 @@ import cv2
 import pandas as pd
 import numpy as np
 
-from numpy.typing import NDArray
-from collections.abc import Generator
-
-from typing import TypedDict, Callable
 import math
 
+from collections.abc import Generator
 
-class Geoposition(TypedDict):
-    latitude: float
-    """Latitude in degrees"""
+from typing import Callable
 
-    longitude: float
-    """Longitude in degrees"""
-
-    ground_level_altitude: float
-    """Ground altitude in meters"""
-
-    sea_level_altitude: float
-    """Absolute altitude in meters"""
+from .typing import Frame
 
 
-class Gimbal(TypedDict):
-    pitch: float
-    """Pitch angle in degrees"""
-
-    roll: float
-    """Roll angle in degrees"""
-
-    yaw: float
-    """Yaw angle in degrees"""
-
-
-class Camera(TypedDict):
-    model: str
-    """Camera model"""
-
-    focal_length: float
-    """Focal length in millimeters"""
-
-    sensor_width: float
-    """Sensor width in millimeters"""
-
-    sensor_height: float
-    """Sensor height in millimeters"""
-
-    gimbal: Gimbal
-    """Gimbal angles"""
-
-
-class Frame(TypedDict):
-    video_filename: str
-    """Video filename"""
-
-    array: NDArray[np.uint8]
-    """Frame as a numpy array"""
-
-    time: int
-    """Time (in milliseconds) of the frame in the video"""
-
-    geoposition: Geoposition
-    """Geoposition of the drone when the frame was captured"""
-
-    camera: Camera
-    """Camera information"""
-
-
-def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[Frame], bool] = None) -> Generator[Frame, None, None]:
+def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[
+                   Frame], bool] = None) -> Generator[Frame, None, None]:
     """Extract frames from videos and synchronize them with flight data
 
     Videos and flight data are assumed to be ordered by collection time.
