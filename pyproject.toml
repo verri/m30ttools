@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "m30ttools"
-dynamic = ['version']
+version = 0.1.0
 authors = [
   { name="Filipe Verri", email="filipeverri@gmail.com" },
 ]
@@ -15,6 +15,7 @@ dependencies = [
   "numpy >= 1.21",
   "pandas",
   "opencv-python",
+  "h5py",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

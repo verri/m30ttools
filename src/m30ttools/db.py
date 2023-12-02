@@ -1,6 +1,7 @@
 """Utilities to generate HDF5 from synchronized data."""
 
 
+import os
 import pandas as pd
 import numpy as np
 import cv2
@@ -10,7 +11,7 @@ import h5py
 def generate_hdf5_from_sync_frames(
         csv_filename: str,
         hdf5_filename: str,
-        array_shape = (160, 90, 1)):
+        array_shape=(160, 90, 1)):
     """Generate HDF5 from synchronized data.
 
     Parameters
@@ -34,7 +35,7 @@ def generate_hdf5_from_sync_frames(
     with h5py.File(hdf5_filename, 'w') as f:
         for _, row in df.iterrows():
             filename = row['filename']
-            array = np.load(filename)
+            array = cv2.imread(filename)
 
             if array.shape[2] == 3 and array_shape[2] == 1:
                 array = cv2.cvtColor(array, cv2.COLOR_RGB2GRAY)
