@@ -33,9 +33,13 @@ def efcommand(args):
     output = args.output
 
     if args.select == 'all':
-        args.select = None
+        args.select = lambda x: True
     elif args.select == 'facing-down':
         args.select = facing_down
+
+    if args.min_altitude is not None:
+        f = args.select
+        args.select = lambda frame: f(frame) and frame["geoposition"]["ground_level_altitude"] >= args.min_altitude
 
     with open(output, 'w') as csvfile:
         fieldnames = ['filename', 'video_filename', 'time', 'latitude', 'longitude',
@@ -101,10 +105,13 @@ def main():
     efparser.add_argument('--output', dest='output',
                           help='CSV file where to save the flight data synced with each frame.', required=True)
 
-    # A option to select which frames will be extracted.  The options are
+    # An option to select which frames will be extracted.  The options are
     # 'all' and 'facing-down'.
     efparser.add_argument('--select', dest='select',
                           default=None, choices=['all', 'facing-down'])
+
+    # An option to filter frames with low altitude.
+    efparser.add_argument('--min-altitude', dest='min_altitude', default=None)
 
     efparser.set_defaults(func=efcommand)
 
@@ -124,10 +131,7 @@ def main():
         '--array-size',
         dest='array_size',
         help='Size of the frame to store.',
-        default=(
-            160,
-            90,
-            1))
+        default=(160, 90, 1))
 
     h5parser.set_defaults(func=h5command)
 
