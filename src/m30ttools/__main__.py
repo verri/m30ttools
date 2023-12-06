@@ -111,7 +111,8 @@ def main():
                           default=None, choices=['all', 'facing-down'])
 
     # An option to filter frames with low altitude.
-    efparser.add_argument('--min-altitude', dest='min_altitude', default=None)
+    efparser.add_argument('--min-altitude', dest='min_altitude', type=float,
+            default=None)
 
     efparser.set_defaults(func=efcommand)
 
