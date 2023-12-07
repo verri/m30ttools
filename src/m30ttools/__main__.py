@@ -11,6 +11,7 @@ import argparse
 import os
 import csv
 import cv2
+import math
 
 from .sync import extract_frames
 from .db import generate_hdf5_from_sync_frames
@@ -50,8 +51,21 @@ def efcommand(args):
         writer.writeheader()
 
         # Extract frames and write to CSV file.
+
+        last_video = ""
+        last_time = -math.inf
+
         for i, frame in enumerate(extract_frames(
                 args.video, args.data, args.select)):
+
+            # Discard frames that are too close to each other.
+            if frame["video_filename"] == last_video and \
+                    frame["time"] - last_time < args.min_time:
+                continue
+
+            last_video = frame["video_filename"]
+            last_time = frame["time"]
+
             # TODO: read number of digits from command line as an optional
             # argument.
             filename = f"{args.frames_dir}/{i:07d}.jpg"
@@ -68,6 +82,11 @@ def efcommand(args):
                 'gimbal_roll': frame["camera"]["gimbal"]["roll"],
                 'gimbal_yaw': frame["camera"]["gimbal"]["yaw"],
             })
+
+            if args.crop is not None:
+                # Crop frame.
+                frame["array"] = frame["array"][args.crop[0]:args.crop[1],
+                                                args.crop[2]:args.crop[3]]
 
             # Save frame to disk.
             cv2.imwrite(filename, frame["array"])
@@ -99,6 +118,14 @@ def main():
     # The output directory is where the frames will be saved.
     efparser.add_argument('--frames-dir', dest='frames_dir',
                           help='Directory where to save the extracted frames.', required=True)
+
+    # The minimum time between frames.  If the time between two frames is less
+    # than this value, the frame will be discarded.
+    efparser.add_argument('--min-time', dest='min_time', type=float, default=0.0)
+
+    # Frame cropping options. The frame will be cropped to the specified
+    # dimensions.
+    efparser.add_argument('--crop', dest='crop', nargs=4, type=int, default=None)
 
     # The output CSV file is where the flight data synced with each frame will
     # be saved.
@@ -132,6 +159,8 @@ def main():
         '--array-size',
         dest='array_size',
         help='Size of the frame to store.',
+        nargs=3,
+        type=int,
         default=(160, 90, 1))
 
     h5parser.set_defaults(func=h5command)
