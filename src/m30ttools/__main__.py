@@ -12,6 +12,8 @@ import os
 import csv
 import cv2
 import math
+import threading
+import queue
 
 from .sync import extract_frames
 from .db import generate_hdf5_from_sync_frames
@@ -43,29 +45,30 @@ def efcommand(args):
         args.select = lambda frame: f(frame) and frame["geoposition"]["ground_level_altitude"] >= args.min_altitude
 
     with open(output, 'w') as csvfile:
-        fieldnames = ['filename', 'video_filename', 'time', 'latitude', 'longitude',
+        fieldnames = ['filename', 'video_filename', 'time', 'datetime', 'latitude', 'longitude',
                       'ground_level_altitude', 'sea_level_altitude',
                       'gimbal_pitch', 'gimbal_roll', 'gimbal_yaw']
 
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        # Extract frames and write to CSV file.
+        def produce_frames(q: queue.Queue):
+            for i, frame in enumerate(extract_frames(args.video, args.data,
+                    args.select, args.min_time)):
+                q.put((i, frame))
+            q.put(None)
 
-        last_video = ""
-        last_time = -math.inf
+        def consume_frames(q: queue.Queue):
+            while True:
+                v = q.get()
+                if v is None:
+                    q.task_done()
+                    break
+                i, frame = v
+                save_frame(i, frame)
+                q.task_done()
 
-        for i, frame in enumerate(extract_frames(
-                args.video, args.data, args.select)):
-
-            # Discard frames that are too close to each other.
-            if frame["video_filename"] == last_video and \
-                    frame["time"] - last_time < args.min_time:
-                continue
-
-            last_video = frame["video_filename"]
-            last_time = frame["time"]
-
+        def save_frame(i, frame):
             # TODO: read number of digits from command line as an optional
             # argument.
             filename = f"{args.frames_dir}/{i:07d}.jpg"
@@ -74,6 +77,7 @@ def efcommand(args):
                 'filename': filename,
                 'video_filename': frame["video_filename"],
                 'time': frame["time"],
+                'datetime': frame["datetime"].isoformat(),
                 'latitude': frame["geoposition"]["latitude"],
                 'longitude': frame["geoposition"]["longitude"],
                 'ground_level_altitude': frame["geoposition"]["ground_level_altitude"],
@@ -96,14 +100,26 @@ def efcommand(args):
             if array.shape[0] != array_size[0] or array.shape[1] != array_size[1]:
                 array = cv2.resize(array, (array_size[0], array_size[1]))
 
-            # Save frame to disk.
+            # Save frame to disk asy
             cv2.imwrite(filename, array)
+
+        q = queue.Queue()
+
+        p = threading.Thread(target=produce_frames, args=(q,))
+        p.start()
+
+        c = threading.Thread(target=consume_frames, args=(q,))
+        c.start()
+
+        p.join()
+        c.join()
+        q.join()
 
 
 def h5command(args):
     print(args)
 
-    generate_hdf5_from_sync_frames(args.data, args.output, args.array_size)
+    generate_hdf5_from_sync_frames(args.data, args.output)
 
 
 def main():

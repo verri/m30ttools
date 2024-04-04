@@ -10,6 +10,8 @@ import cv2
 import pandas as pd
 import numpy as np
 
+from datetime import datetime
+
 import math
 
 from collections.abc import Generator
@@ -19,8 +21,9 @@ from typing import Callable
 from .typing import Frame
 
 
-def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[
-                   Frame], bool] = None) -> Generator[Frame, None, None]:
+def extract_frames(videos: list[str], fdata: list[str],
+                   cond: Callable[[Frame], bool] = None,
+                   min_time: int = 0) -> Generator[Frame, None, None]:
     """Extract frames from videos and synchronize them with flight data
 
     Videos and flight data are assumed to be ordered by collection time.
@@ -36,6 +39,8 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[
     cond : Callable[[Frame], bool], optional
         A function that takes a frame and returns True if the frame should be
         returned, False otherwise. If None, all frames are returned.
+    min_time : int
+        Minimum time between frames in milliseconds
 
     Returns
     -------
@@ -67,6 +72,9 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[
     # The column "time(millisecond)" of each dataframe must start at 0
     for df in fdata:
         df["time(millisecond)"] -= df["time(millisecond)"].iloc[0]
+
+    last_video = ""
+    last_time = -math.inf
 
     # Now we can iterate over the videos and synchronize them with the flight
     for i in range(len(videos)):
@@ -101,12 +109,21 @@ def extract_frames(videos: list[str], fdata: list[str], cond: Callable[[
                 "video_filename": videos[i],
                 "array": None,
                 "time": time,
+                "datetime": datetime.strptime(row["datetime(utc)"], "%Y-%m-%d %H:%M:%S"),
                 "geoposition": geoposition,
                 "camera": camera,
             }
 
             if cond is not None and not cond(frame):
                 continue
+
+            # Discard frames that are too close to each other.
+            if frame["video_filename"] == last_video and \
+                    frame["time"] - last_time < min_time:
+                continue
+
+            last_video = frame["video_filename"]
+            last_time = frame["time"]
 
             # Seek to the frame
             cap.set(cv2.CAP_PROP_POS_MSEC, time)
