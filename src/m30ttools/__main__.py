@@ -83,13 +83,21 @@ def efcommand(args):
                 'gimbal_yaw': frame["camera"]["gimbal"]["yaw"],
             })
 
+            array = frame["array"]
+            array_size = args.array_size
+
             if args.crop is not None:
                 # Crop frame.
-                frame["array"] = frame["array"][args.crop[0]:args.crop[1],
-                                                args.crop[2]:args.crop[3]]
+                array = array[args.crop[0]:args.crop[1], args.crop[2]:args.crop[3]]
+
+            if array.shape[2] == 3 and array_size[2] == 1:
+                array = cv2.cvtColor(array, cv2.COLOR_RGB2GRAY)
+
+            if array.shape[1] != array_size[1] or array.shape[0] != array_size[0]:
+                array = cv2.resize(array, (array_size[1], array_size[0]))
 
             # Save frame to disk.
-            cv2.imwrite(filename, frame["array"])
+            cv2.imwrite(filename, array)
 
 
 def h5command(args):
@@ -141,6 +149,14 @@ def main():
     efparser.add_argument('--min-altitude', dest='min_altitude', type=float,
             default=None)
 
+    efparser.add_argument(
+        '--array-size',
+        dest='array_size',
+        help='Size of the frame to store.',
+        nargs=3,
+        type=int,
+        default=(160, 90, 3))
+
     efparser.set_defaults(func=efcommand)
 
     h5parser = subparsers.add_parser('h5store',
@@ -154,14 +170,6 @@ def main():
         dest='output',
         help='HDF5 filename where to save the flight data.',
         required=True)
-
-    h5parser.add_argument(
-        '--array-size',
-        dest='array_size',
-        help='Size of the frame to store.',
-        nargs=3,
-        type=int,
-        default=(160, 90, 1))
 
     h5parser.set_defaults(func=h5command)
 
