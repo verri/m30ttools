@@ -93,8 +93,8 @@ def efcommand(args):
             if array.shape[2] == 3 and array_size[2] == 1:
                 array = cv2.cvtColor(array, cv2.COLOR_RGB2GRAY)
 
-            if array.shape[1] != array_size[1] or array.shape[0] != array_size[0]:
-                array = cv2.resize(array, (array_size[1], array_size[0]))
+            if array.shape[0] != array_size[0] or array.shape[1] != array_size[1]:
+                array = cv2.resize(array, (array_size[0], array_size[1]))
 
             # Save frame to disk.
             cv2.imwrite(filename, array)
