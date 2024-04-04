@@ -119,7 +119,7 @@ def main():
     efparser.add_argument('--frames-dir', dest='frames_dir',
                           help='Directory where to save the extracted frames.', required=True)
 
-    # The minimum time between frames.  If the time between two frames is less
+    # The minimum time between frames (milliseconds).  If the time between two frames is less
     # than this value, the frame will be discarded.
     efparser.add_argument('--min-time', dest='min_time', type=float, default=0.0)
 
