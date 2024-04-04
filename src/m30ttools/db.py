@@ -122,7 +122,7 @@ def create_geotiff_from_jpg(jpg_image_path, output_dir, dfov, flight_data):
             height=height, count=channels_count+1, dtype=str(jpg_image_array.dtype),
                        crs=crs, transform=transform) as dst:
         dst.write(jpg_image_array, channels_indexes)
-        dst.update_tags(AUTHOR='verri/m30ttools', TIMESTAMP=flight_data['datetime'])
+        dst.update_tags(AUTHOR='verri/m30ttools', CAPTURE_TIMESTAMP=flight_data['datetime'])
         # Create alpha band
         alpha = np.full((height, width), 255, dtype=np.uint8)
         dst.write(alpha, 4)
