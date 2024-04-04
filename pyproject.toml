@@ -16,6 +16,8 @@ dependencies = [
   "pandas",
   "opencv-python",
   "h5py",
+  "rasterio",
+  "geographiclib"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

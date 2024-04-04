@@ -14,9 +14,10 @@ import cv2
 import math
 import threading
 import queue
+import pandas as pd
 
 from .sync import extract_frames
-from .db import generate_hdf5_from_sync_frames
+from .db import generate_hdf5_from_sync_frames, create_geotiff_from_jpg
 
 
 def facing_down(frame):
@@ -25,7 +26,6 @@ def facing_down(frame):
 
 
 def efcommand(args):
-    print(args)
 
     # Creates frame directory if it doesn't exist.
     frame_dir = args.frames_dir
@@ -117,9 +117,18 @@ def efcommand(args):
 
 
 def h5command(args):
-    print(args)
 
     generate_hdf5_from_sync_frames(args.data, args.output)
+
+
+def geotiffcommand(args):
+
+    # Read CSV file
+    df = pd.read_csv(args.data)
+
+    for _, row in df.iterrows():
+        filename = row['filename']
+        create_geotiff_from_jpg(filename, args.output_dir, args.dfov, row)
 
 
 def main():
@@ -179,7 +188,7 @@ def main():
                                      help='Store flight data in HDF5 format.')
 
     h5parser.add_argument('--flight-data', dest='data',
-                          help='CSV filename containing flight data.', required=True)
+                          help='CSV filename containing synced flight data.', required=True)
 
     h5parser.add_argument(
         '--output',
@@ -188,6 +197,21 @@ def main():
         required=True)
 
     h5parser.set_defaults(func=h5command)
+
+    # XXX: at the moment, only facing-down is supported.
+    geotiffparser = subparsers.add_parser('geotiff',
+                                         help='Generate GeoTIFF files from synced flight data.')
+
+    geotiffparser.add_argument('--flight-data', dest='data',
+                               help='CSV filename containing synced flight data.', required=True)
+
+    geotiffparser.add_argument('--output-dir', dest='output_dir',
+                               help='Directory where to save the GeoTIFF files.', required=True)
+
+    geotiffparser.add_argument('--dfov', dest='dfov', type=float,
+                               help='Diagonal field of view of the camera in degrees.', required=True)
+
+    geotiffparser.set_defaults(func=geotiffcommand)
 
     args = parser.parse_args()
     args.func(args)
