@@ -81,7 +81,7 @@ def create_geotiff_from_jpg(jpg_image_path, output_dir, dfov, flight_data):
     h = flight_data['ground_level_altitude']
 
     # By the sine rule, we have:
-    #   sin(dfov / 2) / d = sin(90 - dfov / 2) / h
+    #   d / sin(dfov / 2) = h / sin(90 - dfov / 2)
     # Now, we can solve for d:
     dfov = math.radians(dfov)
     d = h * math.sin(dfov / 2) / math.sin(math.pi / 2 - dfov / 2)
@@ -93,12 +93,12 @@ def create_geotiff_from_jpg(jpg_image_path, output_dir, dfov, flight_data):
 
     # to find the angle of the top right pixel in relation to the center,
     # we use the ratio between width and height
-    # top right pixel is at (width, 0)
-    top_right_yaw = yaw + math.atan(width / height * math.tan(dfov / 2))
+    theta = math.atan(width / height)
+    top_right_yaw = math.degrees(yaw + theta)
     # the remaining corners are:
-    bottom_right_yaw = yaw - math.atan(width / height * math.tan(dfov / 2))
-    bottom_left_yaw = yaw + math.pi - math.atan(width / height * math.tan(dfov / 2))
-    top_left_yaw = yaw - math.pi + math.atan(width / height * math.tan(dfov / 2))
+    top_left_yaw = math.degrees(yaw - theta)
+    bottom_right_yaw = math.degrees(yaw + math.pi - theta)
+    bottom_left_yaw = math.degrees(yaw + math.pi + theta)
 
     # Now we can calculate the coordinates of the corners, assuming center of
     # the image is at (frame.latitute, flight_data['longitude'])
@@ -122,4 +122,3 @@ def create_geotiff_from_jpg(jpg_image_path, output_dir, dfov, flight_data):
                        crs=crs, transform=transform) as dst:
         dst.write(jpg_image_array, channels_indexes)
         dst.update_tags(AUTHOR='verri/m30ttools', TIMESTAMP=flight_data['datetime'])
-
