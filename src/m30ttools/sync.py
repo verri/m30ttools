@@ -21,7 +21,7 @@ from typing import Callable
 from .typing import Frame
 
 
-def extract_frames(videos: list[str], fdata: list[str],
+def extract_frames(videos: list[str], filenames: list[str],
                    cond: Callable[[Frame], bool] = None,
                    min_time: int = 0) -> Generator[Frame, None, None]:
     """Extract frames from videos and synchronize them with flight data
@@ -34,7 +34,7 @@ def extract_frames(videos: list[str], fdata: list[str],
     ----------
     videos : list[str]
         List of paths to videos
-    fdata : list[str]
+    filenames : list[str]
         List of paths to flight data
     cond : Callable[[Frame], bool], optional
         A function that takes a frame and returns True if the frame should be
@@ -49,7 +49,7 @@ def extract_frames(videos: list[str], fdata: list[str],
     """
 
     # Load all datafiles in a single dataframe
-    fdata = pd.concat([pd.read_csv(filename) for filename in fdata])
+    fdata = pd.concat([pd.read_csv(filename) for filename in filenames])
 
     # Every time the variable isVideo changes (from 0 to 1), we know a new
     # video exists. We can use this to split the dataframe into multiple data
@@ -59,15 +59,24 @@ def extract_frames(videos: list[str], fdata: list[str],
     indices = np.where(np.diff(fdata.isVideo) == 1)[0]
 
     print(indices)
-    assert len(indices) == len(videos)
+    assert len(indices) == 0 or len(indices) == len(videos)
 
     # Split the dataframe into multiple dataframes
-    fdata = np.vsplit(fdata, indices)
+    if len(indices) > 0:
+        fdata = np.vsplit(fdata, indices)
+    else:
+        # otherwise, each dataframe is already related to a video
+        fdata = [pd.read_csv(filename) for filename in filenames]
+        # XXX: loading the datasets again is an ugly hack, but it works
+
+    assert len(fdata) == len(videos)
 
     # Now remove all rows that are not related to the video, that is, remove
     # rows such that isVideo is 0
     fdata = [df[df.isVideo == 1] for df in fdata]
     fdata = [df for df in fdata if df.shape[0] > 0]
+
+    # For some
 
     # The column "time(millisecond)" of each dataframe must start at 0
     for df in fdata:
