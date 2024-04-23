@@ -20,6 +20,7 @@ from typing import Callable
 
 from .typing import Frame
 
+from alive_progress import alive_bar
 
 def extract_frames(videos: list[str], filenames: list[str],
                    cond: Callable[[Frame], bool] = None,
@@ -76,8 +77,6 @@ def extract_frames(videos: list[str], filenames: list[str],
     fdata = [df[df.isVideo == 1] for df in fdata]
     fdata = [df for df in fdata if df.shape[0] > 0]
 
-    # For some
-
     # The column "time(millisecond)" of each dataframe must start at 0
     for df in fdata:
         df["time(millisecond)"] -= df["time(millisecond)"].iloc[0]
@@ -87,56 +86,60 @@ def extract_frames(videos: list[str], filenames: list[str],
 
     # Now we can iterate over the videos and synchronize them with the flight
     for i in range(len(videos)):
+        print(f"Processing video {videos[i]} ({i + 1}/{len(videos)})...")
         # Load the video
         cap = cv2.VideoCapture(videos[i])
 
-        for _, row in fdata[i].iterrows():
-            time = row["time(millisecond)"]
+        # Create a progress bar
+        with alive_bar(fdata[i].shape[0]) as bar:
+            for _, row in fdata[i].iterrows():
+                bar()
+                time = row["time(millisecond)"]
 
-            geoposition = {
-                "latitude": row["latitude"],
-                "longitude": row["longitude"],
-                "ground_level_altitude": row["height_above_ground_at_drone_location(meters)"],
-                "sea_level_altitude": row["altitude_above_seaLevel(meters)"],
-            }
+                geoposition = {
+                    "latitude": row["latitude"],
+                    "longitude": row["longitude"],
+                    "ground_level_altitude": row["height_above_ground_at_drone_location(meters)"],
+                    "sea_level_altitude": row["altitude_above_seaLevel(meters)"],
+                }
 
-            # TODO: retrieve camera information from the video file
-            camera = {
-                "model": "(unknown)",
-                "focal_length": math.nan,
-                "sensor_width": math.nan,
-                "sensor_height": math.nan,
-                "gimbal": {
-                    "pitch": row["gimbal_pitch(degrees)"],
-                    "roll": row["gimbal_roll(degrees)"],
-                    "yaw": row["gimbal_heading(degrees)"],
-                },
-            }
+                # TODO: retrieve camera information from the video file
+                camera = {
+                    "model": "(unknown)",
+                    "focal_length": math.nan,
+                    "sensor_width": math.nan,
+                    "sensor_height": math.nan,
+                    "gimbal": {
+                        "pitch": row["gimbal_pitch(degrees)"],
+                        "roll": row["gimbal_roll(degrees)"],
+                        "yaw": row["gimbal_heading(degrees)"],
+                    },
+                }
 
-            # Create the frame
-            frame = {
-                "video_filename": videos[i],
-                "array": None,
-                "time": time,
-                "datetime": datetime.strptime(row["datetime(utc)"], "%Y-%m-%d %H:%M:%S"),
-                "geoposition": geoposition,
-                "camera": camera,
-            }
+                # Create the frame
+                frame = {
+                    "video_filename": videos[i],
+                    "array": None,
+                    "time": time,
+                    "datetime": datetime.strptime(row["datetime(utc)"], "%Y-%m-%d %H:%M:%S"),
+                    "geoposition": geoposition,
+                    "camera": camera,
+                }
 
-            if cond is not None and not cond(frame):
-                continue
+                if cond is not None and not cond(frame):
+                    continue
 
-            # Discard frames that are too close to each other.
-            if frame["video_filename"] == last_video and \
-                    frame["time"] - last_time < min_time:
-                continue
+                # Discard frames that are too close to each other.
+                if frame["video_filename"] == last_video and \
+                        frame["time"] - last_time < min_time:
+                    continue
 
-            last_video = frame["video_filename"]
-            last_time = frame["time"]
+                last_video = frame["video_filename"]
+                last_time = frame["time"]
 
-            # Seek to the frame
-            cap.set(cv2.CAP_PROP_POS_MSEC, time)
-            ret, array = cap.read()
+                # Seek to the frame
+                cap.set(cv2.CAP_PROP_POS_MSEC, time)
+                ret, array = cap.read()
 
-            frame["array"] = array
-            yield frame
+                frame["array"] = array
+                yield frame
