@@ -33,7 +33,7 @@ def generate_hdf5_from_sync_frames(
     with h5py.File(hdf5_filename, 'w') as f:
         for _, row in df.iterrows():
             filename = row['filename']
-            array = cv2.imread(filename)
+            array = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
 
             dset = f.create_dataset(filename, data=array)
 
