@@ -139,5 +139,9 @@ def extract_frames(videos: list[str], filenames: list[str],
                 cap.set(cv2.CAP_PROP_POS_MSEC, time)
                 ret, array = cap.read()
 
+                if array is None:
+                    print("warning: frame at {time} does not exist in video {videos[i]}")
+                    continue
+
                 frame["array"] = array
                 yield frame
