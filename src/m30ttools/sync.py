@@ -140,7 +140,7 @@ def extract_frames(videos: list[str], filenames: list[str],
                 ret, array = cap.read()
 
                 if array is None:
-                    print("warning: frame at {time} does not exist in video {videos[i]}")
+                    print(f"warning: frame at {time} does not exist in video {videos[i]}")
                     continue
 
                 frame["array"] = array
