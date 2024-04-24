@@ -70,8 +70,6 @@ def extract_frames(videos: list[str], filenames: list[str],
         fdata = [pd.read_csv(filename) for filename in filenames]
         # XXX: loading the datasets again is an ugly hack, but it works
 
-    assert len(fdata) == len(videos)
-
     # Now remove all rows that are not related to the video, that is, remove
     # rows such that isVideo is 0
     fdata = [df[df.isVideo == 1] for df in fdata]
