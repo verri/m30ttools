@@ -1,5 +1,13 @@
 # m30ttools
 
+-----
+
+This repo is archived and will probably be deleted soon.
+
+New repo at https://github.com/drone-comp/m30ttools
+
+-----
+
 Tools to organize data from DJI M30T.
 
 Video data is the video files recorded by the drone and stored in the SD card.
